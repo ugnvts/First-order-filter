@@ -20,8 +20,8 @@ Abiejuose: užsakymai rikiuojami pagal pristatymo datą, tada short order ID; im
 
 ## Vieša nuoroda
 
-- Naujausia: https://ugnvts.github.io/first-order-filter/ (A: `#a`, B: `#b`)
-- Užšaldytos versijos: https://ugnvts.github.io/first-order-filter/versijos/
+- Naujausia: https://ugnvts.github.io/First-order-filter/ (A: `#a`, B: `#b`)
+- Užšaldytos versijos: https://ugnvts.github.io/First-order-filter/versijos/
 
 ## Kaip atnaujinti
 
