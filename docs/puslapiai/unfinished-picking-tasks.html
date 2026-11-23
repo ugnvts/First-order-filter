@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unfinished picking tasks – First orders prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gray-50:#f9fafb; --gray-100:#f3f4f6; --gray-200:#e5e7eb; --gray-300:#d1d5db; --gray-400:#9ca3af;
+    --gray-500:#6b7280; --gray-600:#4b5563; --gray-700:#374151; --gray-800:#1f2937; --gray-900:#111827;
+    --indigo-50:#eef2ff; --indigo-100:#e0e7ff; --indigo-600:#4f46e5; --indigo-700:#4338ca;
+    --green-600:#16a34a; --red-600:#dc2626; --blue-600:#2563eb; --nav:#1e2533; --brand:#e30613;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:Inter,system-ui,-apple-system,sans-serif;color:var(--gray-900);background:var(--gray-50);font-size:14px;line-height:20px}
+  button{font:inherit;color:inherit;cursor:pointer}
+  .app{display:flex;min-height:100vh}
+
+  /* Sidebar */
+  .sidebar{width:256px;flex:none;background:var(--nav);color:#d1d5db;position:sticky;top:0;height:100vh}
+  .logo{height:64px;display:flex;align-items:center;padding:0 16px;background:#172033}
+  .logo span{color:var(--brand);font-weight:800;font-size:34px;letter-spacing:1px}
+  .nav{padding:8px}
+  .nav .grp{display:flex;align-items:center;gap:12px;padding:10px 8px;color:#fff;font-weight:500}
+  .nav .grp svg{width:20px;height:20px;stroke:#9ca3af}
+  .nav .grp .chev{margin-left:auto;width:16px;height:16px}
+  .nav a{display:block;padding:9px 8px;border-radius:6px;color:#cbd5e1;text-decoration:none;font-size:14px}
+  .nav a.cur{background:#111827;color:#fff;font-weight:500}
+
+  /* Topbar */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{height:64px;background:#fff;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:flex-end;gap:24px;padding:0 24px;flex:none}
+  .topbar a{color:var(--gray-600);text-decoration:none;font-size:14px;height:64px;display:flex;align-items:center}
+  .topbar a.cur{color:var(--gray-900);font-weight:500;box-shadow:inset 0 -2px 0 var(--brand)}
+  .avatar-top{width:32px;height:32px;border-radius:50%;background:#9b1c1c;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:600}
+
+  .content{padding:24px 32px 48px}
+  h1{font-size:24px;line-height:32px;margin:0;font-weight:700}
+  .loc{display:flex;align-items:center;gap:6px;margin-top:4px;color:var(--gray-700)}
+  .loc b{font-weight:600}
+
+  /* Filter rows */
+  .frow{display:flex;align-items:center;gap:8px;margin-top:16px;flex-wrap:wrap}
+  .frow .ico{width:24px;display:grid;place-items:center;color:var(--gray-500)}
+  .chip{position:relative}
+  .chip > button{height:38px;padding:0 13px;border:1px solid var(--gray-300);background:#fff;border-radius:6px;display:flex;align-items:center;gap:8px;font-weight:500;color:var(--gray-700);box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .chip > button:hover{background:var(--gray-50)}
+  .chip.on > button{border-color:var(--indigo-600);box-shadow:0 0 0 1px var(--indigo-600) inset}
+  .badge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--indigo-100);color:var(--indigo-700);font-size:12px;display:grid;place-items:center;font-weight:500}
+  .chk{width:16px;height:16px;color:var(--gray-500)}
+  .chip.on .chk{color:var(--indigo-600)}
+  .locked{height:38px;padding:0 13px;border:1px solid var(--gray-200);border-radius:6px;display:flex;align-items:center;gap:8px;color:var(--gray-400);background:#fff}
+
+  /* Dropdown panel (text-search-filter / checklist) */
+  .panel{position:absolute;top:46px;left:0;z-index:30;width:322px;background:#fff;border-radius:8px;box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05);border:1px solid var(--gray-200)}
+  .panel.right{left:auto;right:0}
+  .panel .body{padding:16px}
+  .panel .foot{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--gray-200)}
+  .panel .foot .sp{flex:1}
+  .field{display:flex;align-items:center;border:1px solid var(--gray-300);border-radius:6px;height:38px;padding:0 13px;gap:8px}
+  .field:focus-within{border-color:var(--indigo-600);box-shadow:0 0 0 1px var(--indigo-600)}
+  .field input{border:0;outline:0;flex:1;font:inherit;min-width:0;background:transparent}
+  .field .suf{color:var(--gray-500)}
+  .help{color:var(--gray-500);margin-top:8px}
+  .err{color:var(--red-600);margin-top:8px}
+  .opts{max-height:260px;overflow:auto;margin:-4px 0}
+  .opt{display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer}
+  .opt input{width:16px;height:16px;accent-color:var(--indigo-600);margin:0}
+  .btn{height:38px;padding:0 17px;border-radius:6px;font-weight:500;border:1px solid var(--gray-300);background:#fff}
+  .btn:hover{background:var(--gray-50)}
+  .btn.primary{background:var(--indigo-600);border-color:var(--indigo-600);color:#fff}
+  .btn.primary:hover{background:var(--indigo-700)}
+  .btn.primary:disabled{opacity:.5;cursor:default}
+  .link{background:none;border:0;color:var(--indigo-600);font-weight:500;padding:0}
+  .link:hover{color:var(--indigo-700)}
+
+  /* Active filters row */
+  .active{display:flex;align-items:center;gap:16px;margin-top:16px;min-height:38px}
+  .fs{display:flex;align-items:center;gap:6px;color:var(--gray-600)}
+  .fs b{color:var(--gray-900);font-weight:500}
+  .fs button{border:0;background:none;padding:2px;color:var(--gray-400);display:grid}
+  .fs button:hover{color:var(--gray-700)}
+  .active .sp{flex:1}
+  .firstwrap{display:flex;align-items:center;gap:12px;padding-left:16px;border-left:1px solid var(--gray-200)}
+  .xbtn{border:0;background:none;color:var(--gray-400);padding:4px;display:grid}
+  .xbtn:hover{color:var(--gray-700)}
+
+  /* Table */
+  .card{margin-top:16px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:1280px}
+  th{font-size:12px;line-height:16px;font-weight:500;color:var(--gray-500);text-transform:uppercase;letter-spacing:.03em;text-align:left;padding:12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);white-space:nowrap}
+  td{padding:12px;border-bottom:1px solid var(--gray-200);vertical-align:top;white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:var(--gray-50)}
+  tbody tr.sel{background:var(--indigo-50)}
+  th.sortable{cursor:pointer;user-select:none}
+  th.sortable:hover{color:var(--gray-700)}
+  th.sorted{color:var(--gray-900)}
+  .sarr{display:inline-flex;vertical-align:middle;margin-left:2px}
+  .num{text-align:right}
+  th.num{text-align:right}
+  .cb{width:16px;height:16px;accent-color:var(--indigo-600);margin:2px 0 0}
+  .task{color:var(--gray-900);font-weight:500}
+  .blue{color:var(--blue-600)}
+  .green{color:var(--green-600);display:inline-flex;align-items:center;gap:6px}
+  .pill{display:inline-block;background:var(--gray-100);color:var(--gray-800);border-radius:6px;padding:2px 8px;font-size:12px;line-height:16px;font-weight:500}
+  .short{font-variant-numeric:tabular-nums}
+  .picker{display:flex;gap:10px;align-items:flex-start}
+  .pav{width:32px;height:32px;border-radius:50%;background:var(--gray-500);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:500;flex:none}
+  .ago{color:var(--gray-500);font-size:12px;line-height:16px}
+  .kebab{color:var(--gray-400);text-align:center}
+  .empty{padding:48px;text-align:center;color:var(--gray-500)}
+  .pager{display:flex;align-items:center;justify-content:center;position:relative;margin-top:16px;color:var(--gray-700);min-height:24px}
+  .pager .r{position:absolute;right:0;display:flex;gap:16px}
+  .pager .r button{border:0;background:none;color:var(--gray-700);display:flex;align-items:center;gap:6px;font-weight:500}
+  .pager .r button:disabled{color:var(--gray-300);cursor:default}
+  .pager .rng{color:var(--indigo-600)}
+
+  /* Prototype notes (outside product UI) */
+  .proto{position:fixed;right:16px;bottom:16px;z-index:50;font-size:13px}
+  .proto{display:flex;gap:8px;align-items:center}
+  .seg{display:flex;background:var(--gray-900);border-radius:20px;padding:3px;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .seg button{border:0;background:none;color:#cbd5e1;padding:5px 12px;border-radius:16px;font-weight:500}
+  .seg button.cur{background:#fff;color:var(--gray-900)}
+  .proto > button{background:var(--gray-900);color:#fff;border:0;border-radius:20px;padding:8px 14px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .proto .box{position:absolute;right:0;bottom:44px;width:360px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;padding:16px;box-shadow:0 10px 25px rgba(0,0,0,.15);color:var(--gray-700)}
+  .proto .box h3{margin:0 0 8px;font-size:14px;color:var(--gray-900)}
+  .proto .box ol{margin:0;padding-left:18px}
+  .proto .box li{margin-bottom:6px}
+  .proto .stat{margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200);font-variant-numeric:tabular-nums}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span>BARBORA</span></div>
+    <nav class="nav">
+      <div class="grp"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>Tasks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      <a href="#">Dashboard</a>
+      <a href="#" class="cur">Unfinished picking tasks</a>
+      <a href="#">Orders to pick</a>
+      <div class="grp"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 5a3 3 0 0 1 0 6M18 15c2 .5 3 2.5 3 5"/></svg>Pickers<svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      <a href="#">Picker accounts</a>
+      <div class="grp"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="m4 7 8 4 8-4M12 11v10"/></svg>Service management<svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      <a href="#">Item addresses</a>
+      <a href="#">Capacity management</a>
+      <a href="#">Picking zones</a>
+      <div class="grp"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Statistics<svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      <a href="#">Picking statistics</a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <a href="#" class="cur">Picking</a><a href="#">Assortment</a><a href="#">Reports</a><a href="#">Payments</a>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      <div class="avatar-top">VU</div>
+    </header>
+
+    <main class="content">
+      <h1>Unfinished picking tasks</h1>
+      <div class="loc"><svg width="16" height="16" viewBox="0 0 24 24" fill="#6b7280"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg><b>X500</b></div>
+
+      <div class="frow" id="filters">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg></div>
+      </div>
+      <div class="frow">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h2l2.4 11h11.2L21 7H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/></svg></div>
+        <div class="locked">Units, not more than <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10V8A5 5 0 0 0 7 8v2H5v11h14V10zm-8-2a3 3 0 0 1 6 0v2H9z"/></svg></div>
+        <div class="locked">Kg, not more than <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10V8A5 5 0 0 0 7 8v2H5v11h14V10zm-8-2a3 3 0 0 1 6 0v2H9z"/></svg></div>
+        <div class="locked">SKU, not more than <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10V8A5 5 0 0 0 7 8v2H5v11h14V10zm-8-2a3 3 0 0 1 6 0v2H9z"/></svg></div>
+        <div class="locked">Orders, not more than <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10V8A5 5 0 0 0 7 8v2H5v11h14V10zm-8-2a3 3 0 0 1 6 0v2H9z"/></svg></div>
+      </div>
+
+      <div class="active" id="active" hidden></div>
+
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px"><input type="checkbox" class="cb" id="selAll"></th>
+              <th>Task</th>
+              <th>Wave</th>
+              <th title="Stickers"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a3 3 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a3 3 0 0 0 0-6z"/></svg></th>
+              <th class="num">Picked lines</th>
+              <th class="num">Total lines</th>
+              <th class="num">Counted, pcs</th>
+              <th class="num">Weighed, kg</th>
+              <th>Zone</th>
+              <th class="sortable" id="sortShort" title="Sort by short order ID">Short order ID <span class="sarr" id="sortArr"></span></th>
+              <th>Region</th>
+              <th>Picker</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pager"></div>
+    </main>
+  </div>
+</div>
+
+<div class="proto">
+  <div class="seg" id="variantSeg">
+    <button data-v="A" title="Button appears after Delivery date + Wave are selected">A · Active filters row</button>
+    <button data-v="B" title="Button is always the last filter">B · Last filter</button>
+  </div>
+</div>
+
+<script>
+/* ---------- Data ---------- */
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R = rng(20261123);
+const pick = a => a[Math.floor(R()*a.length)];
+const int = (a,b) => a + Math.floor(R()*(b-a+1));
+
+const ZONES = ['Fruits, vegetables - RYTAS','Fruits, vegetables','Bananas','Milk, fish, poultry','UAT Milk','Groceries','Cofee, tea, candy','Chips','Soft drinks','Alcoholic beverages','Frozen goods','Bread products','Manufactured goods','Cosmetics','Pampers / Toilet Paper','Morning Morning.Garden','Gifts_Pie','Gifts_Bak','Flowers'];
+const WS_ZONES = ['Fresh meat','Fresh fish','Confectionery MXM','Gastronomy'];
+const KG_ZONES = new Set(['Fruits, vegetables - RYTAS','Fruits, vegetables','Bananas','Fresh meat','Fresh fish']);
+const PICKERS = ['John Doe','Jane Smith','Tom Brown','Anna Lee','Mark Green','Eva White','Paul Black','Lina Grey','Sam Wilson','Kate Moore'];
+const AGO = ['Just now','8 minutes ago','10 minutes ago','12 minutes ago','13 minutes ago','17 minutes ago','22 minutes ago','25 minutes ago','27 minutes ago','34 minutes ago'];
+const DATES = [
+  {key:'today',    label:'Today',    yymmdd:'261123', waves:[['4B',.2],['5B',.8]], orders:150, maxId:260},
+  {key:'tomorrow', label:'Tomorrow', yymmdd:'261124', waves:[['1B',.55],['2B',.45]], orders:120, maxId:200},
+];
+const hex = () => Math.floor(R()*4096).toString(16).padStart(3,'0');
+
+const TASKS = [];
+const zonePicker = {};
+ZONES.concat(WS_ZONES).forEach(z => zonePicker[z] = pick(PICKERS));
+
+DATES.forEach(d => {
+  // short IDs restart per delivery date; finished orders are gone, so there are gaps
+  const ids = new Set();
+  while (ids.size < d.orders) ids.add(int(1, d.maxId));
+  [...ids].sort((a,b)=>a-b).forEach(shortId => {
+    let r = R(), wave = d.waves[0][0];
+    for (const [w,p] of d.waves){ if (r < p){ wave = w; break; } r -= p; }
+    const nTasks = Math.min(int(1,5), 5);
+    const used = new Set();
+    for (let i=0;i<nTasks;i++){
+      const ws = R() < .12;
+      let zone; do { zone = ws ? pick(WS_ZONES) : pick(ZONES); } while (used.has(zone)); used.add(zone);
+      const suffix = ws ? 'WS' : (R() < .14 ? 'SH' : 'R');
+      const total = R() < .7 ? int(1,4) : int(5,40);
+      const kgZone = KG_ZONES.has(zone);
+      const pcs = kgZone ? int(0,3) : int(total, total*3);
+      const kg = kgZone ? (int(25,940)/100) : 0;
+      const pr = R();
+      const picked = pr < .82 ? 0 : (pr < .94 ? int(1,Math.max(1,total-1)) : total);
+      let picker = null;
+      if (suffix === 'SH') picker = {name:'KONTROLIERIUS X500', ago:'Just now', ini:'KX'};
+      else if (suffix === 'R' && R() < .55) {
+        const n = zonePicker[zone];
+        picker = {name:n, ago: R()<.5 ? pick(AGO) : '', ini:n.split(' ').map(s=>s[0]).join('')};
+      }
+      TASKS.push({
+        id:`X500${d.yymmdd}/${hex()}${suffix}`, date:d.key, wave, shortId,
+        stickers: R() < .07 ? 11 : null, picked, total, pcs, kg, zone,
+        region: int(1,6), picker, synced: R() < .5, workshop: suffix==='WS',
+        created: R()
+      });
+    }
+  });
+});
+TASKS.sort((a,b)=>b.created-a.created); // default display: by createdAt
+
+/* ---------- Filter definitions ---------- */
+const uniq = (arr) => [...new Set(arr)];
+const FILTERS = [
+  {key:'task', label:'Task', type:'text', placeholder:'Enter task number'},
+  {key:'wave', label:'Wave', type:'list', options:()=>uniq(TASKS.map(t=>t.wave)).sort((a,b)=>a.localeCompare(b)).map(v=>({v,l:v}))},
+  {key:'date', label:'Delivery date', type:'list', options:()=>DATES.map(d=>({v:d.key,l:d.label}))},
+  {key:'zone', label:'Zone', type:'list', options:()=>uniq(TASKS.map(t=>t.zone)).sort().map(v=>({v,l:v}))},
+  {key:'region', label:'Region', type:'list', options:()=>[1,2,3,4,5,6].map(v=>({v:String(v),l:v+' regionas'}))},
+  {key:'unassigned', label:'Unassigned', type:'toggle'},
+  {key:'picker', label:'Picker', type:'list', options:()=>uniq(TASKS.filter(t=>t.picker).map(t=>t.picker.name)).sort().map(v=>({v,l:v}))},
+  {key:'synced', label:'Synchronized', type:'toggle'},
+  {key:'workshop', label:'Workshops', type:'toggle'},
+  {key:'nostickers', label:'Without stickers', type:'toggle'},
+];
+
+const state = { f:{}, first:null, page:0, open:null, selected:new Set(), sort:null /* null | 'asc' | 'desc' */,
+  variant: (location.hash === '#B') ? 'B' : 'A' /* A = button in active filters row, B = last filter button */ };
+FILTERS.forEach(f => state.f[f.key] = f.type==='list' ? [] : (f.type==='toggle' ? false : ''));
+
+const isActive = k => { const v = state.f[k]; return Array.isArray(v) ? v.length>0 : !!v; };
+const firstAvailable = () => state.variant === 'B' || (isActive('date') && isActive('wave'));
+
+/* ---------- Core logic ---------- */
+function compute(){
+  const f = state.f;
+  let keep = null, poolOrders = 0;
+  if (state.first && firstAvailable()){
+    // 1. pool = orders matching Delivery date + Wave (B: if not set – all unfinished orders)
+    const map = new Map();
+    TASKS.forEach(t => {
+      if ((!f.date.length || f.date.includes(t.date)) && (!f.wave.length || f.wave.includes(t.wave))) map.set(t.date+'|'+t.shortId, {date:t.date, id:t.shortId});
+    });
+    const dIdx = {today:0, tomorrow:1};
+    // 2. sort by delivery date, then short order ID; 3. take first N
+    const orders = [...map.values()].sort((a,b)=> dIdx[a.date]-dIdx[b.date] || a.id-b.id);
+    poolOrders = orders.length;
+    keep = new Set(orders.slice(0, state.first).map(o=>o.date+'|'+o.id));
+  }
+  // 4. every filter narrows the tasks (other filters only hide tasks of the N orders)
+  const rows = TASKS.filter(t => {
+    if (f.task && !t.id.toLowerCase().includes(f.task.toLowerCase())) return false;
+    if (f.wave.length && !f.wave.includes(t.wave)) return false;
+    if (f.date.length && !f.date.includes(t.date)) return false;
+    if (f.zone.length && !f.zone.includes(t.zone)) return false;
+    if (f.region.length && !f.region.includes(String(t.region))) return false;
+    if (f.unassigned && t.picker) return false;
+    if (f.picker.length && !(t.picker && f.picker.includes(t.picker.name))) return false;
+    if (f.synced && !t.synced) return false;
+    if (f.workshop && !t.workshop) return false;
+    if (f.nostickers && t.stickers) return false;
+    if (keep && !keep.has(t.date+'|'+t.shortId)) return false;
+    return true;
+  });
+  return {rows, keep, poolOrders};
+}
+
+/* ---------- Rendering ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const CHECK = '<svg class="chk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m5 12 5 5 9-10"/></svg>';
+const X = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+const PAGE = 50;
+
+function renderFilters(){
+  const wrap = $('#filters');
+  wrap.querySelectorAll('.chip').forEach(n=>n.remove());
+  FILTERS.forEach(f => {
+    const on = isActive(f.key);
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (on ? ' on' : '');
+    let inner = esc(f.label);
+    if (f.type === 'toggle') inner += CHECK;
+    else if (on) inner += `<span class="badge">${f.type==='list' ? state.f[f.key].length : 1}</span>`;
+    chip.innerHTML = `<button type="button">${inner}</button>`;
+    chip.firstChild.onclick = (e) => {
+      e.stopPropagation();
+      if (f.type === 'toggle'){ state.f[f.key] = !state.f[f.key]; afterChange(); return; }
+      state.open = state.open === f.key ? null : f.key; render();
+    };
+    if (state.open === f.key) chip.appendChild(buildPanel(f));
+    wrap.appendChild(chip);
+  });
+  if (state.variant === 'B'){
+    // B: "Number of first orders" – last filter button, always visible
+    const fc = document.createElement('div');
+    fc.className = 'chip' + (state.first ? ' on' : '');
+    fc.innerHTML = `<button type="button">Number of first orders${state.first ? '<span class="badge">1</span>' : ''}</button>`;
+    fc.firstChild.onclick = e => { e.stopPropagation(); state.open = state.open==='first' ? null : 'first'; render(); };
+    if (state.open === 'first') fc.appendChild(buildFirstPanel());
+    wrap.appendChild(fc);
+  }
+}
+
+function buildPanel(f){
+  const p = document.createElement('div');
+  p.className = 'panel';
+  p.onclick = e => e.stopPropagation();
+  if (f.type === 'text'){
+    p.innerHTML = `<div class="body"><div class="field"><input placeholder="${f.placeholder}" value="${esc(state.f[f.key])}"></div></div>
+      <div class="foot"><button class="link" data-a="clear">Clear</button><span class="sp"></span><button class="btn" data-a="cancel">Cancel</button><button class="btn primary" data-a="apply">Apply</button></div>`;
+    const inp = p.querySelector('input');
+    setTimeout(()=>inp.focus());
+    const apply = () => { state.f[f.key] = inp.value.trim(); state.open=null; afterChange(); };
+    inp.onkeydown = e => { if (e.key==='Enter') apply(); if (e.key==='Escape'){state.open=null;render();} };
+    p.querySelector('[data-a=apply]').onclick = apply;
+  } else {
+    const cur = new Set(state.f[f.key]);
+    p.innerHTML = `<div class="body"><div class="opts">${f.options().map(o=>`<label class="opt"><input type="checkbox" value="${esc(o.v)}" ${cur.has(o.v)?'checked':''}>${esc(o.l)}</label>`).join('')}</div></div>
+      <div class="foot"><button class="link" data-a="clear">Clear</button><span class="sp"></span><button class="btn" data-a="cancel">Cancel</button><button class="btn primary" data-a="apply">Apply</button></div>`;
+    p.querySelector('[data-a=apply]').onclick = () => {
+      state.f[f.key] = [...p.querySelectorAll('input:checked')].map(i=>i.value); state.open=null; afterChange();
+    };
+  }
+  p.querySelector('[data-a=clear]').onclick = () => { state.f[f.key] = f.type==='list' ? [] : ''; state.open=null; afterChange(); };
+  p.querySelector('[data-a=cancel]').onclick = () => { state.open=null; render(); };
+  return p;
+}
+
+function buildFirstPanel(){
+  const p = document.createElement('div');
+  p.className = 'panel right';
+  p.onclick = e => e.stopPropagation();
+  p.innerHTML = `<div class="body">
+      <div class="field"><input inputmode="numeric" placeholder="Enter value" value="${state.first ?? ''}"><span class="suf">Orders</span></div>
+      <div class="help">Shows tasks of the entered number of orders, starting from the lowest short order ID.</div>
+      <div class="err" hidden>Enter a whole number greater than 0.</div>
+    </div>
+    <div class="foot"><button class="link" data-a="clear">Clear</button><span class="sp"></span><button class="btn" data-a="cancel">Cancel</button><button class="btn primary" data-a="apply">Apply</button></div>`;
+  const inp = p.querySelector('input'), err = p.querySelector('.err'), help = p.querySelector('.help'), ap = p.querySelector('[data-a=apply]');
+  const valid = () => /^\d+$/.test(inp.value.trim()) && +inp.value > 0;
+  const sync = () => { const bad = inp.value.trim() !== '' && !valid(); err.hidden = !bad; help.hidden = bad; ap.disabled = !valid(); };
+  inp.oninput = sync; sync();
+  setTimeout(()=>{inp.focus(); inp.select();});
+  const apply = () => { if (!valid()) return; state.first = parseInt(inp.value,10); state.open=null; afterChange(); };
+  inp.onkeydown = e => { if (e.key==='Enter') apply(); if (e.key==='Escape'){state.open=null;render();} };
+  ap.onclick = apply;
+  p.querySelector('[data-a=clear]').onclick = () => { state.first=null; state.open=null; afterChange(); };
+  p.querySelector('[data-a=cancel]').onclick = () => { state.open=null; render(); };
+  return p;
+}
+
+function renderActive(){
+  const el = $('#active');
+  const items = FILTERS.filter(f => isActive(f.key));
+  el.hidden = items.length === 0 && !(state.variant === 'B' && state.first);
+  el.innerHTML = '';
+  items.forEach(f => {
+    let val;
+    if (f.type==='toggle') val = 'Yes';
+    else if (f.type==='text') val = state.f[f.key];
+    else {
+      const labels = f.options().filter(o => state.f[f.key].includes(o.v)).map(o=>o.l);
+      val = labels.length > 2 ? `${labels.length} selected` : labels.join(', ');
+    }
+    const s = document.createElement('div');
+    s.className = 'fs';
+    s.innerHTML = `${esc(f.label)}: <b>${esc(val)}</b><button type="button" title="Remove">${X}</button>`;
+    s.querySelector('button').onclick = () => { state.f[f.key] = f.type==='list' ? [] : (f.type==='toggle'?false:''); afterChange(); };
+    el.appendChild(s);
+  });
+  if (state.variant === 'B' && state.first){
+    const s = document.createElement('div');
+    s.className = 'fs';
+    s.innerHTML = `Number of first orders: <b>${state.first}</b><button type="button" title="Remove">${X}</button>`;
+    s.querySelector('button').onclick = () => { state.first = null; afterChange(); };
+    el.appendChild(s);
+  }
+  const clr = document.createElement('button');
+  clr.className = 'link'; clr.textContent = 'Clear all';
+  clr.onclick = () => { FILTERS.forEach(f => state.f[f.key] = f.type==='list' ? [] : (f.type==='toggle'?false:'')); state.first=null; afterChange(); };
+  el.appendChild(clr);
+
+  const sp = document.createElement('div'); sp.className='sp'; el.appendChild(sp);
+
+  if (state.variant === 'A' && firstAvailable()){
+    const w = document.createElement('div');
+    w.className = 'firstwrap';
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (state.first ? ' on' : '');
+    chip.innerHTML = `<button type="button" title="${state.first ? 'First '+state.first+' orders' : ''}">Number of first orders${state.first ? '<span class="badge">1</span>' : ''}</button>`;
+    chip.firstChild.onclick = e => { e.stopPropagation(); state.open = state.open==='first' ? null : 'first'; render(); };
+    if (state.open === 'first') chip.appendChild(buildFirstPanel());
+    w.appendChild(chip);
+    if (state.first){
+      const x = document.createElement('button');
+      x.className='xbtn'; x.title='Clear number of first orders'; x.innerHTML = X.replace('16','20').replace('16','20');
+      x.onclick = () => { state.first=null; afterChange(); };
+      w.appendChild(x);
+    }
+    el.appendChild(w);
+  }
+}
+
+function fmtKg(v){ return v.toFixed(2); }
+
+const ARR_UP = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+const ARR_DOWN = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M6 13l6 6 6-6"/></svg>';
+const ARR_BOTH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="2.2"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>';
+
+function renderTable(res){
+  let rows = res.rows;
+  // Sorting by short order ID: delivery date first (IDs restart per date), then short ID
+  if (state.sort){
+    const dir = state.sort === 'asc' ? 1 : -1, dIdx = {today:0, tomorrow:1};
+    rows = [...rows].sort((a,b) => dir * ((dIdx[a.date]-dIdx[b.date]) || (a.shortId-b.shortId)));
+  }
+  $('#sortArr').innerHTML = state.sort === 'asc' ? ARR_UP : state.sort === 'desc' ? ARR_DOWN : ARR_BOTH;
+  $('#sortShort').classList.toggle('sorted', !!state.sort);
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE));
+  if (state.page >= pages) state.page = pages-1;
+  const slice = rows.slice(state.page*PAGE, state.page*PAGE+PAGE);
+  $('#rows').innerHTML = slice.length ? slice.map(t => `
+    <tr class="${state.selected.has(t.id)?'sel':''}" data-id="${t.id}">
+      <td><input type="checkbox" class="cb" ${state.selected.has(t.id)?'checked':''}></td>
+      <td class="task">${t.id}</td>
+      <td>${t.wave}</td>
+      <td>${t.stickers ?? ''}</td>
+      <td class="num">${t.picked && t.picked===t.total ? `<span class="green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m5 12 5 5 9-10"/></svg>${t.picked}</span>` : `<span class="blue">${t.picked}</span>`}</td>
+      <td class="num">${t.total}</td>
+      <td class="num">${t.pcs}</td>
+      <td class="num">${fmtKg(t.kg)}</td>
+      <td><span class="pill">${esc(t.zone)}</span></td>
+      <td class="short">${t.shortId}</td>
+      <td>${t.region} regionas</td>
+      <td>${t.picker ? `<div class="picker"><div class="pav">${t.picker.ini}</div><div>${esc(t.picker.name)}${t.picker.ago?`<div class="ago">${t.picker.ago}</div>`:''}</div></div>` : ''}</td>
+      <td class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></td>
+    </tr>`).join('') : `<tr><td colspan="13" class="empty">No tasks match the selected filters.</td></tr>`;
+
+  $('#rows').querySelectorAll('tr[data-id]').forEach(tr => {
+    tr.querySelector('input').onchange = e => {
+      const id = tr.dataset.id; e.target.checked ? state.selected.add(id) : state.selected.delete(id);
+      tr.classList.toggle('sel', e.target.checked); syncSelAll(slice);
+    };
+  });
+  $('#selAll').onchange = e => { slice.forEach(t => e.target.checked ? state.selected.add(t.id) : state.selected.delete(t.id)); render(); };
+  syncSelAll(slice);
+
+  const pg = $('#pager');
+  if (rows.length > PAGE){
+    const a = state.page*PAGE+1, b = Math.min(rows.length, a+PAGE-1);
+    pg.innerHTML = `<span><span class="rng">${a} - ${b}</span> of ${rows.length}</span>
+      <div class="r"><button id="prev" ${state.page===0?'disabled':''}>← Previous</button><button id="next" ${state.page>=pages-1?'disabled':''}>Next →</button></div>`;
+    $('#prev').onclick = () => { state.page--; render(); window.scrollTo(0,0); };
+    $('#next').onclick = () => { state.page++; render(); window.scrollTo(0,0); };
+  } else pg.innerHTML = '';
+}
+function syncSelAll(slice){
+  const all = $('#selAll'); const n = slice.filter(t=>state.selected.has(t.id)).length;
+  all.checked = slice.length>0 && n===slice.length; all.indeterminate = n>0 && n<slice.length;
+}
+
+function renderProto(res){
+  const orders = new Set(res.rows.map(t=>t.date+'|'+t.shortId)).size;
+  let s = `Rodoma: <b>${res.rows.length}</b> užduočių iš <b>${orders}</b> užsakymų.`;
+  if (state.first && res.keep){
+    const ids = [...res.keep].map(k=>{const [d,id]=k.split('|');return (d==='today'?'T':'R')+id;});
+    s += `<br>Aibėje (Delivery date + Wave): ${res.poolOrders} užsakymų. Pirmieji ${state.first}: ${res.keep.size} užsakymų.`;
+    if (res.keep.size <= 12) s += `<br>Short order ID: ${[...res.keep].map(k=>k.split('|')[1]).join(', ')}`;
+  }
+  const st = document.getElementById("protoStat"); if (st) st.innerHTML = s;
+}
+
+function render(){
+  // first-orders filter only lives while Delivery date + Wave are active
+  if (!firstAvailable() && state.first){ state.first = null; }
+  if (!firstAvailable() && state.open==='first') state.open = null;
+  document.querySelectorAll('#variantSeg button').forEach(b => b.classList.toggle('cur', b.dataset.v === state.variant));
+  renderFilters();
+  renderActive();
+  const res = compute();
+  renderTable(res);
+  renderProto(res);
+}
+function afterChange(){ state.page = 0; render(); }
+
+document.addEventListener('click', () => { if (state.open){ state.open=null; render(); } });
+document.addEventListener('keydown', e => { if (e.key==='Escape' && state.open){ state.open=null; render(); } });
+// header click cycles: default (createdAt) -> ascending -> descending -> default
+$('#sortShort').onclick = () => { state.sort = state.sort===null ? 'asc' : state.sort==='asc' ? 'desc' : null; state.page = 0; render(); };
+function setVariant(v){
+  if (state.variant === v) return;
+  state.variant = v; state.first = null; state.open = null;
+  afterChange();
+}
+document.querySelectorAll('#variantSeg button').forEach(b => b.onclick = e => {
+  e.stopPropagation();
+  setVariant(b.dataset.v);
+  history.replaceState(null, '', '#' + state.variant);
+});
+// Inside the prototypes shell (iframe) the variant comes from the shell tabs via #A / #B
+window.addEventListener('hashchange', () => setVariant(location.hash === '#B' ? 'B' : 'A'));
+if (window.self !== window.top) document.querySelector('.proto').hidden = true;
+render();
+</script>
+</body>
+</html>
